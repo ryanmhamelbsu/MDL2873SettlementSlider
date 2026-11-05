@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive, unofficial AFFF MDL 2873 settlement distribution scenarios.">
+  <title>MDL 2873 | Settlement Tier Calculator</title>
+  <style>
+    :root { color-scheme: light; --ink:#12223a; --muted:#5a6a7f; --bg:#f3f6fb; --border:#d9e2ed; --blue:#356bb1; --green:#138678; --gold:#b37a22; --danger:#b42318; }
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{max-width:920px;margin:0 auto;padding:30px 18px 55px}.eyebrow{font-size:.79rem;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);font-weight:800}h1{font-size:clamp(1.8rem,5vw,2.65rem);line-height:1.14;letter-spacing:-.035em;margin:9px 0 12px}h2{font-size:1.22rem;margin:0 0 8px}p{margin:8px 0 0}.intro{color:var(--muted);max-width:760px}
+    .card{background:#fff;border:1px solid var(--border);border-radius:17px;padding:21px;margin-top:17px;box-shadow:0 4px 15px rgba(26,52,89,.035)}
+    .summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stat{border-radius:12px;background:#f3f7fc;padding:16px}.stat span,.small{color:var(--muted);font-size:.88rem}.stat strong{display:block;font-size:clamp(1.3rem,3vw,1.9rem);font-variant-numeric:tabular-nums;line-height:1.3;margin-top:3px}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:15px 0;border-top:1px solid var(--border)}.toggle-row label{font-weight:750;cursor:pointer}.toggle-row small{display:block;color:var(--muted);font-weight:400}
+    input[type=checkbox]{width:23px;height:23px;accent-color:var(--blue);cursor:pointer;flex-shrink:0}input[type=range]{display:block;width:100%;cursor:pointer;accent-color:var(--blue);margin:12px 0 5px}input[type=number]{font:inherit;width:145px;max-width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:9px;color:var(--ink);background:#fff}
+    .tier-heading{display:flex;justify-content:space-between;align-items:start;gap:14px}.tier-heading h2{margin:0}.count{font-size:1.55rem;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}.tier1{border-top:5px solid var(--blue)}.tier2{border-top:5px solid var(--green)}.tier3{border-top:5px solid var(--gold)}
+    .tier2 input[type=range]{accent-color:var(--green)}.tier3 input[type=range]{accent-color:var(--gold)}.range-labels,.field-row,.money-row{display:flex;justify-content:space-between;align-items:center;gap:12px}.range-labels{color:var(--muted);font-size:.8rem}.field-row{margin-top:18px;flex-wrap:wrap}.money-row{padding-top:15px;margin-top:15px;border-top:1px solid var(--border)}.money-row strong{font-size:1.35rem;font-variant-numeric:tabular-nums}.tier-description{color:var(--muted);margin:2px 0 14px}.subtle{background:#f6f8fb;border-radius:10px;padding:11px 13px;margin-top:14px}
+    .bar{display:flex;height:23px;border-radius:9px;overflow:hidden;background:#e5ebf2;margin:15px 0 8px}.bar div{transition:width .15s}.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:.86rem;color:var(--muted)}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+    .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;margin-top:15px;min-width:470px}th,td{border-bottom:1px solid var(--border);padding:11px 7px;text-align:right;font-variant-numeric:tabular-nums}th:first-child,td:first-child{text-align:left}th{font-size:.84rem;color:var(--muted)}.totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}.total-box{padding:13px;background:#f3f7fc;border-radius:10px}.total-box strong{display:block;font-size:1.27rem}
+    .warning{border-left:4px solid var(--danger);background:#fff2f0;padding:12px 14px;border-radius:8px;color:#8a1c15;margin-top:16px}.ok{border-left:4px solid var(--green);background:#eef9f6;padding:12px 14px;border-radius:8px;color:#15594f;margin-top:16px}
+    button{border:0;background:var(--blue);color:white;padding:11px 16px;border-radius:9px;cursor:pointer;font:inherit;font-weight:700}button.secondary{background:#e7eef8;color:var(--ink)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}footer{margin-top:22px;color:var(--muted);font-size:.85rem}
+    @media(max-width:550px){main{padding:20px 12px 35px}.card{padding:16px}.count{font-size:1.25rem}.totals{grid-template-columns:1fr}.summary{gap:8px}.stat{padding:12px}.tier-heading{align-items:center}}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">AFFF personal injury · MDL 2873</div>
+    <h1>3M Settlement Tier Calculator</h1>
+    <p class="intro">Explore hypothetical distributions of 3M's settlement funding among 120,000 claimants. Move claimants from Tier 1 into Tier 2, then from Tier 2 into Tier 3. This is an independent math model—not an official allocation matrix.</p>
+
+    <section class="card" aria-label="Settlement settings">
+      <div class="summary">
+        <div class="stat"><span>Total claimants (fixed)</span><strong>120,000</strong></div>
+        <div class="stat"><span>Total settlement fund</span><strong id="fundDisplay">$6.32B</strong></div>
+      </div>
+      <div class="toggle-row">
+        <label for="conditional">Include conditional funding<small>Add $1.03B, bringing the illustrative total to $7.35B</small></label>
+        <input type="checkbox" id="conditional" aria-label="Include conditional funding">
+      </div>
+      <p class="small">Conditional participation payments, bonuses, and reserve amounts are not guaranteed and may not all be available for distribution to current claimants.</p>
+    </section>
+
+    <section class="card tier1">
+      <div class="tier-heading"><div><h2>Tier 1</h2><p class="tier-description">Starts with all claimants. Tier 1 receives the fund remaining after Tier 2 and Tier 3 awards.</p></div><div class="count" id="tier1Count">120,000</div></div>
+      <div class="money-row"><span>Gross payout per Tier 1 claimant</span><strong id="tier1Payout">$52,667</strong></div>
+      <div class="subtle small">Tier 1 award is calculated automatically from the remaining funds.</div>
+    </section>
+
+    <section class="card tier2">
+      <div class="tier-heading"><div><h2>Tier 2</h2><p class="tier-description">Slide to transfer people from Tier 1 into Tier 2.</p></div><div class="count" id="tier2Count">0</div></div>
+      <label for="tier2Moved"><strong>People moved into Tier 2</strong></label>
+      <input id="tier2Moved" type="range" min="0" max="120000" step="1000" value="0">
+      <div class="range-labels"><span>0</span><span>120,000</span></div>
+      <div class="field-row"><label for="tier2Award">Tier 2 gross award per person</label><input id="tier2Award" type="number" min="0" max="6320000000" step="5000" value="50000"></div>
+      <div class="money-row"><span>Tier 2 total allocation</span><strong id="tier2Total">$0</strong></div>
+    </section>
+
+    <section class="card tier3">
+      <div class="tier-heading"><div><h2>Tier 3</h2><p class="tier-description">Slide to transfer people from Tier 2 into Tier 3.</p></div><div class="count" id="tier3Count">0</div></div>
+      <label for="tier3Moved"><strong>People moved into Tier 3</strong></label>
+      <input id="tier3Moved" type="range" min="0" max="0" step="1000" value="0" disabled>
+      <div class="range-labels"><span>0</span><span id="tier3Max">0</span></div>
+      <div class="field-row"><label for="tier3Award">Tier 3 gross award per person</label><input id="tier3Award" type="number" min="0" max="6320000000" step="5000" value="10000"></div>
+      <div class="money-row"><span>Tier 3 total allocation</span><strong id="tier3Total">$0</strong></div>
+    </section>
+
+    <section class="card">
+      <h2>Results</h2>
+      <div class="bar" aria-label="Share of funds by tier"><div id="bar1" style="width:100%;background:#356bb1"></div><div id="bar2" style="width:0%;background:#138678"></div><div id="bar3" style="width:0%;background:#b37a22"></div></div>
+      <div class="legend"><span><i class="dot" style="background:#356bb1"></i>Tier 1</span><span><i class="dot" style="background:#138678"></i>Tier 2</span><span><i class="dot" style="background:#b37a22"></i>Tier 3</span></div>
+      <div class="field-row"><label for="deductions">Estimated deductions (%)</label><input id="deductions" type="number" min="0" max="100" step="1" value="45"></div>
+      <div class="table-wrap"><table><thead><tr><th>Tier</th><th>Claimants</th><th>Gross/person</th><th>Net/person</th><th>Allocated</th></tr></thead><tbody id="resultRows"></tbody></table></div>
+      <div class="totals"><div class="total-box"><span class="small">Average gross across all 120,000</span><strong id="average">$52,667</strong></div><div class="total-box"><span class="small">Funds not allocated</span><strong id="unallocated">$0</strong></div></div>
+      <div id="message" class="ok" role="status">All settlement funds are allocated in this scenario.</div>
+      <div class="actions"><button type="button" id="copy">Copy scenario</button><button type="button" class="secondary" id="reset">Reset sliders</button></div>
+    </section>
+    <footer>Unofficial mathematical scenario tool. The Tier 1, Tier 2, and Tier 3 categories and amounts shown are hypothetical, not the official settlement scoring matrix. The $7.35B maximum includes conditional funds subject to settlement terms. Actual available awards may be lower due to administrative costs, participation requirements, and allocation rules. Nothing here is legal or financial advice.</footer>
+  </main>
+  <script>
+    'use strict';
+    const PEOPLE = 120000, BASE_FUND = 6320000000, MAX_FUND = 7350000000;
+    const byId = id => document.getElementById(id);
+    const money = num => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(num);
+    const number = num => new Intl.NumberFormat('en-US').format(num);
+    const safeNum = (value, fallback, min, max) => {const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;};
+    let latest = null;
+
+    function calculate(){
+      const fund=byId('conditional').checked?MAX_FUND:BASE_FUND;
+      const into2=safeNum(byId('tier2Moved').value,0,0,PEOPLE);
+      const into3=safeNum(byId('tier3Moved').value,0,0,into2);
+      byId('tier3Moved').max=String(into2);
+      byId('tier3Moved').disabled=into2===0;
+      byId('tier3Moved').value=String(into3);
+      const counts=[PEOPLE-into2,into2-into3,into3];
+      const price2=safeNum(byId('tier2Award').value,50000,0,MAX_FUND);
+      const price3=safeNum(byId('tier3Award').value,10000,0,MAX_FUND);
+      const deduction=safeNum(byId('deductions').value,45,0,100);
+      const allocated2=counts[1]*price2,allocated3=counts[2]*price3;
+      const remaining=fund-allocated2-allocated3;
+      const hasTier1=counts[0]>0;
+      const price1=hasTier1?remaining/counts[0]:0;
+      const allocated1=hasTier1?remaining:0;
+      const actualAllocated=allocated1+allocated2+allocated3;
+      const shortfall=Math.max(0,-remaining);
+      const unallocated=hasTier1?0:Math.max(0,remaining);
+      const payouts=[price1,price2,price3], allocated=[allocated1,allocated2,allocated3];
+      latest={fund,counts,payouts,allocated,deduction,shortfall,unallocated};
+      byId('fundDisplay').textContent=fund===BASE_FUND?'$6.32B':'$7.35B';
+      counts.forEach((n,i)=>byId('tier'+(i+1)+'Count').textContent=number(n));
+      byId('tier1Payout').textContent=hasTier1?money(price1):'N/A';
+      byId('tier2Total').textContent=money(allocated2);
+      byId('tier3Total').textContent=money(allocated3);
+      byId('tier3Max').textContent=number(into2);
+      byId('resultRows').innerHTML=counts.map((n,i)=>`<tr><td>Tier ${i+1}</td><td>${number(n)}</td><td>${n?money(payouts[i]):'—'}</td><td>${n?money(payouts[i]*(1-deduction/100)):'—'}</td><td>${money(allocated[i])}</td></tr>`).join('');
+      byId('average').textContent=money(fund/PEOPLE);
+      byId('unallocated').textContent=money(unallocated);
+      ['bar1','bar2','bar3'].forEach((id,i)=>byId(id).style.width=(Math.max(0,allocated[i])/fund*100)+'%');
+      const message=byId('message');
+      if(shortfall>0){message.className='warning';message.textContent=`Over budget by ${money(shortfall)}: Tier 2 and Tier 3 awards exceed the entire fund. Reduce claimant counts or award amounts; Tier 1's calculated award is negative and not payable.`;}
+      else if(unallocated>0){message.className='warning';message.textContent=`${money(unallocated)} is unallocated because no Tier 1 claimants remain. Tier 2 and Tier 3 awards are fixed, so the model does not automatically add this remainder to their awards.`;}
+      else{message.className='ok';message.textContent='All settlement funds are allocated in this scenario.';}
+    }
+    ['conditional','tier2Moved','tier3Moved','tier2Award','tier3Award','deductions'].forEach(id=>byId(id).addEventListener('input',calculate));
+    byId('reset').addEventListener('click',()=>{byId('conditional').checked=false;byId('tier2Moved').value=0;byId('tier3Moved').value=0;byId('tier2Award').value=50000;byId('tier3Award').value=10000;byId('deductions').value=45;calculate();});
+    byId('copy').addEventListener('click',async()=>{const s=latest;const lines=[`AFFF MDL 2873 — Unofficial Settlement Model`,`Settlement fund: ${money(s.fund)}`,`Claimants: ${number(PEOPLE)}`, ...s.counts.map((n,i)=>`Tier ${i+1}: ${number(n)} people | ${n?money(s.payouts[i]):'N/A'} gross/person | ${n?money(s.payouts[i]*(1-s.deduction/100)):'N/A'} net/person | ${money(s.allocated[i])} allocated`),`Deductions: ${s.deduction}%`,`Unallocated: ${money(s.unallocated)}`,`Budget shortfall: ${money(s.shortfall)}`,`Hypothetical, not official allocation terms.`].join('\n');try{await navigator.clipboard.writeText(lines);byId('copy').textContent='Copied!';setTimeout(()=>byId('copy').textContent='Copy scenario',1800);}catch(e){window.prompt('Copy this scenario:',lines);}});
+    calculate();
+  </script>
+</body>
+</html>
